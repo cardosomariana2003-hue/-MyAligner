@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MyAligner">
+<title>MyAligner</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+main{max-width:520px;margin:auto;padding:calc(22px + env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.eyebrow{font-size:11px;letter-spacing:1.4px;font-weight:700;opacity:.45}
+h1{font-size:28px;margin:4px 0}
+h2{font-size:18px;margin:0 0 14px}
+.card{background:white;border-radius:24px;padding:20px;box-shadow:0 8px 28px rgba(25,39,74,.07);margin-bottom:14px}
+.hero{text-align:center}.date{font-weight:600;opacity:.55;margin-bottom:16px}
+.ring{width:210px;height:210px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#172033 0deg,#e8ebf2 0deg);position:relative}
+.ring:after{content:"";position:absolute;width:172px;height:172px;background:#fff;border-radius:50%}
+.ring>div{z-index:1;display:flex;flex-direction:column}
+.ring strong{font-size:31px}.ring span{font-size:14px;opacity:.5;margin-top:3px}.ring b{font-size:15px;margin-top:8px}
+.status{font-size:19px;font-weight:750}.substatus{min-height:20px;font-size:14px;opacity:.55;margin:5px 0 18px}
+.mainBtn{width:100%;border:0;border-radius:17px;padding:17px 12px;font-weight:800;font-size:15px;background:#172033;color:white}
+.mainBtn.on{background:#eef1f6;color:#172033}
+.ghost{border:0;background:transparent;font-weight:650;opacity:.5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.mini{margin:0 0 14px}
+.mini span{display:block;font-size:12px;opacity:.5;margin-bottom:7px}.mini strong{font-size:19px}
+.mini input{width:48px;border:0;background:transparent;font:inherit;font-weight:inherit;color:inherit;padding:0}
+.row{display:grid;grid-template-columns:90px 1fr 62px;align-items:center;gap:10px;margin:11px 0;font-size:13px}
+.bar{height:8px;background:#edf0f5;border-radius:20px;overflow:hidden}.fill{height:100%;background:#172033;border-radius:20px}
+.ok{font-weight:700}.note{text-align:center;font-size:11px;line-height:1.5;opacity:.45;padding:3px 18px}
+</style>
+</head>
+<body>
+<main>
+<header><div><div class="eyebrow">O MEU APARELHO</div><h1>MyAligner 🦷</h1></div><button class="ghost" id="resetBtn">Repor hoje</button></header>
+<section class="card hero">
+<div class="date" id="dateLabel"></div>
+<div class="ring" id="ring"><div><strong id="todayTime">00h 00m</strong><span id="goalText">de 22h</span><b id="percent">0%</b></div></div>
+<div class="status" id="status">Aparelho fora</div>
+<div class="substatus" id="substatus">Toca no botão quando o colocares.</div>
+<button class="mainBtn" id="toggleBtn">COLOQUEI O APARELHO</button>
+</section>
+<section class="grid">
+<div class="card mini"><span>Meta diária</span><strong><input id="goalInput" type="number" min="1" max="24" step="0.5" value="22"> h</strong></div>
+<div class="card mini"><span>Tempo fora hoje</span><strong id="outTime">00h 00m</strong></div>
+</section>
+<section class="card"><h2>Últimos 7 dias</h2><div id="history"></div></section>
+<p class="note">Os dados ficam guardados neste dispositivo. A meta deve seguir a indicação do teu dentista/ortodontista.</p>
+</main>
+<script>
+const KEY="myaligner-v1";
+let data=JSON.parse(localStorage.getItem(KEY)||'{"goal":22,"active":false,"started":null,"days":{}}');
+const $=id=>document.getElementById(id);
+const dayKey=(d=new Date())=>{let y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),x=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${x}`};
+const ensure=k=>{if(!data.days[k])data.days[k]={seconds:0}};
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function secondsToday(){let k=dayKey();ensure(k);let s=data.days[k].seconds;if(data.active&&data.started)s+=Math.max(0,(Date.now()-data.started)/1000);return s}
+function fmt(s){s=Math.max(0,s);let h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return `${String(h).padStart(2,"0")}h ${String(m).padStart(2,"0")}m`}
+function commit(){if(data.active&&data.started){ensure(dayKey());data.days[dayKey()].seconds+=(Date.now()-data.started)/1000;data.started=Date.now();save()}}
+function render(){
+ const now=new Date(),s=secondsToday(),goal=data.goal*3600,pct=Math.min(100,Math.round(s/goal*100));
+ $("dateLabel").textContent=now.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"});
+ $("todayTime").textContent=fmt(s);$("goalText").textContent=`de ${data.goal}h`;$("percent").textContent=`${pct}%`;
+ $("ring").style.background=`conic-gradient(#172033 ${pct*3.6}deg,#e8ebf2 ${pct*3.6}deg)`;
+ $("goalInput").value=data.goal;
+ $("outTime").textContent=fmt(Math.max(0,now.getHours()*3600+now.getMinutes()*60+now.getSeconds()-s));
+ if(data.active){$("status").textContent="Aparelho colocado ✓";$("toggleBtn").textContent="TIREI O APARELHO";$("toggleBtn").classList.add("on");$("substatus").textContent=`Colocado há ${fmt((Date.now()-data.started)/1000)}`}
+ else{$("status").textContent="Aparelho fora";$("toggleBtn").textContent="COLOQUEI O APARELHO";$("toggleBtn").classList.remove("on");$("substatus").textContent="Toca no botão quando o colocares."}
+ renderHistory()
+}
+function renderHistory(){
+ let html="";
+ for(let i=0;i<7;i++){let d=new Date();d.setDate(d.getDate()-i);let k=dayKey(d),s=(data.days[k]?.seconds||0);if(i===0)s=secondsToday();let p=Math.min(100,s/(data.goal*3600)*100);html+=`<div class="row"><span>${i===0?"Hoje":d.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric"})}</span><div class="bar"><div class="fill" style="width:${p}%"></div></div><span class="${p>=100?"ok":""}">${fmt(s)}</span></div>`}
+ $("history").innerHTML=html
+}
+$("toggleBtn").onclick=()=>{if(data.active){commit();data.active=false;data.started=null}else{data.active=true;data.started=Date.now()}save();render()};
+$("goalInput").onchange=e=>{data.goal=Math.max(1,Math.min(24,Number(e.target.value)||22));save();render()};
+$("resetBtn").onclick=()=>{if(confirm("Queres apagar o registo de hoje?")){data.days[dayKey()]={seconds:0};if(data.active)data.started=Date.now();save();render()}};
+setInterval(render,1000);render();
+</script>
+</body>
+</html>
