@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MyAligner">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f5f7fb">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>MyAligner</title>
 <style>
 *{box-sizing:border-box}
@@ -162,6 +167,13 @@ $("reminderMinutes").onchange=e=>{data.reminderMinutes=Number(e.target.value);da
 $("notifyBtn").onclick=async()=>{if(!("Notification" in window)){alert("Este navegador não suporta notificações web.");return}let p=await Notification.requestPermission();$("notifyBtn").textContent=p==="granted"?"NOTIFICAÇÕES ATIVADAS ✓":"PERMISSÃO NÃO ATIVADA"};
 function checkReminder(){if(data.active||!data.lastRemoved||data.reminderSent)return;let mins=(Date.now()-data.lastRemoved)/60000;if(mins>=data.reminderMinutes){let msg="Está na hora de voltar a colocar o aparelho 🦷";if("Notification" in window&&Notification.permission==="granted"){try{new Notification("MyAligner",{body:msg})}catch(e){alert(msg)}}else{alert(msg)}data.reminderSent=true;save()}}
 setInterval(()=>{render();checkReminder()},1000);render();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
