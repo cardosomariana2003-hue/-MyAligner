@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MyAligner">
+<title>MyAligner</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+main{max-width:520px;margin:auto;padding:calc(22px + env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.eyebrow{font-size:11px;letter-spacing:1.4px;font-weight:700;opacity:.45}
+h1{font-size:28px;margin:4px 0}
+h2{font-size:18px;margin:0 0 14px}
+.card{background:white;border-radius:24px;padding:20px;box-shadow:0 8px 28px rgba(25,39,74,.07);margin-bottom:14px}
+.hero{text-align:center}.date{font-weight:600;opacity:.55;margin-bottom:16px}
+.ring{width:210px;height:210px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#172033 0deg,#e8ebf2 0deg);position:relative}
+.ring:after{content:"";position:absolute;width:172px;height:172px;background:#fff;border-radius:50%}
+.ring>div{z-index:1;display:flex;flex-direction:column}
+.ring strong{font-size:31px}.ring span{font-size:14px;opacity:.5;margin-top:3px}.ring b{font-size:15px;margin-top:8px}
+.status{font-size:19px;font-weight:750}.substatus{min-height:20px;font-size:14px;opacity:.55;margin:5px 0 18px}
+.mainBtn{width:100%;border:0;border-radius:17px;padding:17px 12px;font-weight:800;font-size:15px;background:#172033;color:white}
+.mainBtn.on{background:#eef1f6;color:#172033}
+.ghost{border:0;background:transparent;font-weight:650;opacity:.5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.mini{margin:0 0 14px}
+.mini span{display:block;font-size:12px;opacity:.5;margin-bottom:7px}.mini strong{font-size:19px}
+.mini input{width:48px;border:0;background:transparent;font:inherit;font-weight:inherit;color:inherit;padding:0}
+.row{display:grid;grid-template-columns:90px 1fr 62px;align-items:center;gap:10px;margin:11px 0;font-size:13px}
+.bar{height:8px;background:#edf0f5;border-radius:20px;overflow:hidden}.fill{height:100%;background:#172033;border-radius:20px}
+.ok{font-weight:700}.note{text-align:center;font-size:11px;line-height:1.5;opacity:.45;padding:3px 18px}
+.monthHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.monthHead h2{margin:0;text-transform:capitalize}.navBtn{border:0;background:#f1f3f7;border-radius:12px;width:40px;height:40px;font-size:20px;color:#172033}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}.stat{background:#f5f7fb;border-radius:17px;padding:13px}.stat span{display:block;font-size:11px;opacity:.5;margin-bottom:5px}.stat strong{font-size:18px}
+.chart{height:155px;display:flex;align-items:flex-end;gap:3px;padding-top:12px;border-bottom:1px solid #e8ebf2}.daybar{flex:1;min-width:2px;background:#172033;border-radius:4px 4px 0 0;opacity:.8}.daybar.today{opacity:1}
+.legend{font-size:11px;opacity:.45;margin-top:8px;text-align:center}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.dow{text-align:center;font-size:10px;font-weight:700;opacity:.4;padding:5px 0}.day{aspect-ratio:1/1;border-radius:11px;background:#f5f7fb;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px}.day b{font-size:12px}.day small{font-size:8px;opacity:.55;margin-top:2px}.day.met{outline:2px solid #172033}.day.empty{background:transparent}.day.today{background:#172033;color:#fff}.setting{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px}.setting select,.notifyBtn{border:0;background:#f1f3f7;border-radius:12px;padding:10px 12px;font:inherit;font-weight:650;color:#172033}.notifyBtn{width:100%;margin-top:12px}.small{font-size:12px;opacity:.55;line-height:1.4}
+.dataBtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.dataBtn{border:0;background:#f1f3f7;border-radius:12px;padding:12px;font:inherit;font-weight:750;color:#172033}
+#importFile{display:none}
+</style>
+</head>
+<body>
+<main>
+<header><div><div class="eyebrow">O MEU APARELHO</div><h1>MyAligner 🦷</h1></div><button class="ghost" id="resetBtn">Repor hoje</button></header>
+<section class="card hero">
+<div class="date" id="dateLabel"></div>
+<div class="ring" id="ring"><div><strong id="todayTime">00h 00m</strong><span id="goalText">de 22h</span><b id="percent">0%</b></div></div>
+<div class="status" id="status">Aparelho fora</div>
+<div class="substatus" id="substatus">Toca no botão quando o colocares.</div>
+<button class="mainBtn" id="toggleBtn">COLOQUEI O APARELHO</button>
+</section>
+<section class="grid">
+<div class="card mini"><span>Meta diária</span><strong><input id="goalInput" type="number" min="1" max="24" step="0.5" value="22"> h</strong></div>
+<div class="card mini"><span>Tempo fora hoje</span><strong id="outTime">00h 00m</strong></div>
+</section>
+<section class="card">
+<div class="monthHead"><button class="navBtn" id="prevMonth">‹</button><h2 id="monthTitle">Mês</h2><button class="navBtn" id="nextMonth">›</button></div>
+<div class="stats">
+<div class="stat"><span>Média diária</span><strong id="monthAvg">00h 00m</strong></div>
+<div class="stat"><span>Dias com meta</span><strong id="monthMet">0</strong></div>
+<div class="stat"><span>Total do mês</span><strong id="monthTotal">00h 00m</strong></div>
+<div class="stat"><span>Meta cumprida</span><strong id="monthPct">0%</strong></div>
+</div>
+<div class="chart" id="monthChart"></div>
+<div class="legend">Horas de utilização por dia</div>
+</section>
+<section class="card">
+<h2>Calendário do mês</h2>
+<div class="calendar" id="calendar"></div>
+</section>
+<section class="card">
+<h2>Lembrete</h2>
+<div class="small">Avisa se estiveres demasiado tempo sem o aparelho enquanto a app estiver aberta.</div>
+<div class="setting"><span>Avisar após</span><select id="reminderMinutes"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hora</option><option value="90">1h30</option><option value="120">2 horas</option></select></div>
+<button class="notifyBtn" id="notifyBtn">ATIVAR NOTIFICAÇÕES</button>
+</section>
+<section class="card">
+<h2>Dados</h2>
+<div class="small">Passa os teus registos entre o Safari e a aplicação sem perder o histórico.</div>
+<div class="dataBtns">
+<button class="dataBtn" id="exportBtn">EXPORTAR DADOS</button>
+<button class="dataBtn" id="importBtn">IMPORTAR DADOS</button>
+</div>
+<input id="importFile" type="file" accept=".json,application/json">
+</section>
+<p class="note">Os dados ficam guardados neste dispositivo. A meta deve seguir a indicação do teu dentista/ortodontista.</p>
+</main>
+<script>
+const KEY="myaligner-v1";
+let data=JSON.parse(localStorage.getItem(KEY)||'{"goal":22,"active":false,"started":null,"days":{}}');
+if(!data.reminderMinutes)data.reminderMinutes=30;
+if(data.lastRemoved===undefined)data.lastRemoved=null;
+if(data.reminderSent===undefined)data.reminderSent=false;
+// "wearStarted" guarda a hora REAL em que o aparelho foi colocado.
+// Ao contrário de "started", não é alterado na passagem da meia-noite.
+if(data.wearStarted===undefined)data.wearStarted=data.active&&data.started?data.started:null;
+let viewMonth=new Date(); viewMonth.setDate(1);
+const $=id=>document.getElementById(id);
+const dayKey=(d=new Date())=>{let y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),x=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${x}`};
+const ensure=k=>{if(!data.days[k])data.days[k]={seconds:0}};
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function splitActiveTime(until=Date.now()){
+ if(!data.active||!data.started||until<=data.started)return;
+ let cursor=new Date(data.started);
+ const end=new Date(until);
+ while(cursor<end){
+   const nextMidnight=new Date(cursor);
+   nextMidnight.setHours(24,0,0,0);
+   const segmentEnd=new Date(Math.min(end.getTime(),nextMidnight.getTime()));
+   const k=dayKey(cursor);
+   ensure(k);
+   data.days[k].seconds+=(segmentEnd-cursor)/1000;
+   cursor=segmentEnd;
+ }
+ data.started=until;
+}
+function rolloverDay(){
+ if(data.active&&data.started&&dayKey(new Date(data.started))!==dayKey()){
+   splitActiveTime(Date.now());
+   save();
+ }
+}
+function secondsToday(){rolloverDay();let k=dayKey();ensure(k);let s=data.days[k].seconds;if(data.active&&data.started)s+=Math.max(0,(Date.now()-data.started)/1000);return s}
+function fmt(s){s=Math.max(0,s);let h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return `${String(h).padStart(2,"0")}h ${String(m).padStart(2,"0")}m`}
+function commit(){if(data.active&&data.started){splitActiveTime(Date.now());save()}}
+function render(){
+ const now=new Date(),s=secondsToday(),goal=data.goal*3600,pct=Math.min(100,Math.round(s/goal*100));
+ $("dateLabel").textContent=now.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"});
+ $("todayTime").textContent=fmt(s);$("goalText").textContent=`de ${data.goal}h`;$("percent").textContent=`${pct}%`;
+ $("ring").style.background=`conic-gradient(#172033 ${pct*3.6}deg,#e8ebf2 ${pct*3.6}deg)`;
+ $("goalInput").value=data.goal;
+ $("outTime").textContent=fmt(Math.max(0,now.getHours()*3600+now.getMinutes()*60+now.getSeconds()-s));
+ if(data.active){$("status").textContent="Aparelho colocado ✓";$("toggleBtn").textContent="TIREI O APARELHO";$("toggleBtn").classList.add("on");$("substatus").textContent=`Colocado há ${fmt((Date.now()-(data.wearStarted||data.started))/1000)}`}
+ else{$("status").textContent="Aparelho fora";$("toggleBtn").textContent="COLOQUEI O APARELHO";$("toggleBtn").classList.remove("on");$("substatus").textContent="Toca no botão quando o colocares."}
+ renderMonth(); $("reminderMinutes").value=String(data.reminderMinutes)
+}
+function monthSeconds(y,m,day){
+ let d=new Date(y,m,day), k=dayKey(d), s=(data.days[k]?.seconds||0);
+ if(k===dayKey())s=secondsToday();
+ return s;
+}
+function renderMonth(){
+ let y=viewMonth.getFullYear(),m=viewMonth.getMonth(),days=new Date(y,m+1,0).getDate();
+ $("monthTitle").textContent=viewMonth.toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
+ let total=0,met=0,recorded=0,bars="";
+ for(let d=1;d<=days;d++){
+   let date=new Date(y,m,d), future=date>new Date(new Date().setHours(23,59,59,999)), s=monthSeconds(y,m,d);
+   if(!future){recorded++;total+=s;if(s>=data.goal*3600)met++}
+   let h=s/3600, height=Math.min(100,(h/24)*100);
+   let isToday=dayKey(date)===dayKey();
+   bars+=`<div class="daybar ${isToday?"today":""}" title="${d}: ${fmt(s)}" style="height:${Math.max(s?2:0,height)}%"></div>`;
+ }
+ $("monthChart").innerHTML=bars;
+ $("monthAvg").textContent=fmt(recorded?total/recorded:0);
+ $("monthMet").textContent=`${met} / ${recorded}`;
+ $("monthTotal").textContent=fmt(total);
+ $("monthPct").textContent=`${recorded?Math.round(met/recorded*100):0}%`;
+
+ const names=["S","T","Q","Q","S","S","D"];
+ let html=names.map(x=>`<div class="dow">${x}</div>`).join("");
+ let first=(new Date(y,m,1).getDay()+6)%7;
+ for(let i=0;i<first;i++)html+=`<div class="day empty"></div>`;
+ for(let d=1;d<=days;d++){
+   let date=new Date(y,m,d),s=monthSeconds(y,m,d),h=s/3600,isToday=dayKey(date)===dayKey();
+   html+=`<div class="day ${s>=data.goal*3600?"met":""} ${isToday?"today":""}"><b>${d}</b><small>${h? h.toFixed(1)+"h":"—"}</small></div>`;
+ }
+ $("calendar").innerHTML=html;
+}
+$("toggleBtn").onclick=()=>{if(data.active){commit();data.active=false;data.started=null;data.wearStarted=null;data.lastRemoved=Date.now();data.reminderSent=false}else{data.active=true;data.started=Date.now();data.wearStarted=data.started;data.lastRemoved=null;data.reminderSent=false}save();render()};
+$("goalInput").onchange=e=>{data.goal=Math.max(1,Math.min(24,Number(e.target.value)||22));save();render()};
+$("resetBtn").onclick=()=>{if(confirm("Queres apagar o registo de hoje?")){data.days[dayKey()]={seconds:0};if(data.active)data.started=Date.now();save();render()}};
+$("prevMonth").onclick=()=>{viewMonth.setMonth(viewMonth.getMonth()-1);render()};
+$("nextMonth").onclick=()=>{viewMonth.setMonth(viewMonth.getMonth()+1);render()};
+$("reminderMinutes").onchange=e=>{data.reminderMinutes=Number(e.target.value);data.reminderSent=false;save()};
+$("notifyBtn").onclick=async()=>{if(!("Notification" in window)){alert("Este navegador não suporta notificações web.");return}let p=await Notification.requestPermission();$("notifyBtn").textContent=p==="granted"?"NOTIFICAÇÕES ATIVADAS ✓":"PERMISSÃO NÃO ATIVADA"};
+function checkReminder(){if(data.active||!data.lastRemoved||data.reminderSent)return;let mins=(Date.now()-data.lastRemoved)/60000;if(mins>=data.reminderMinutes){let msg="Está na hora de voltar a colocar o aparelho 🦷";if("Notification" in window&&Notification.permission==="granted"){try{new Notification("MyAligner",{body:msg})}catch(e){alert(msg)}}else{alert(msg)}data.reminderSent=true;save()}}
+
+$("exportBtn").onclick=()=>{
+  if(data.active)commit();
+  const backup={app:"MyAligner",version:1,exportedAt:Date.now(),data:data};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=`MyAligner-dados-${dayKey()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+
+$("importBtn").onclick=()=>$("importFile").click();
+
+$("importFile").onchange=async e=>{
+  const file=e.target.files&&e.target.files[0];
+  if(!file)return;
+  try{
+    const parsed=JSON.parse(await file.text());
+    const incoming=parsed&&parsed.app==="MyAligner"&&parsed.data?parsed.data:parsed;
+    if(!incoming||typeof incoming!=="object"||!incoming.days||typeof incoming.days!=="object")throw new Error("Formato inválido");
+    if(!confirm("Importar estes dados? Os registos atuais desta app serão substituídos pelos dados do ficheiro.")){e.target.value="";return}
+    data=incoming;
+    if(!data.goal)data.goal=22;
+    if(!data.reminderMinutes)data.reminderMinutes=30;
+    if(data.lastRemoved===undefined)data.lastRemoved=null;
+    if(data.reminderSent===undefined)data.reminderSent=false;
+    if(data.wearStarted===undefined)data.wearStarted=data.active&&data.started?data.started:null;
+    save();
+    viewMonth=new Date(); viewMonth.setDate(1);
+    render();
+    alert("Dados importados com sucesso ✓");
+  }catch(err){alert("Não foi possível importar este ficheiro.")}
+  e.target.value="";
+};
+
+setInterval(()=>{render();checkReminder()},1000);render();
+</script>
+</body>
+</html>
